@@ -1,0 +1,68 @@
+DATOS NECESARIOS PARA EJECUTAR EL PROYECTO
+Dataset: CICIoMT2024
+Página oficial: https://www.unb.ca/cic/datasets/iomt-dataset-2024.html
+
+Descargar los CSV sin cambiar sus nombres. Aunque contienen ".pcap" en el
+nombre, su formato final es CSV. No es necesario descargar los PCAP.
+
+1. ENTRENAMIENTO (TRAIN)
+Guardar en: data/raw/CICIoMT2024/train/
+
+1. Tráfico benigno
+Archivo: Benign_train.pcap.csv
+Descarga: https://cicresearch.ca/IOTDataset/CICIoMT2024/download.php?file=WiFI_and_MQTT%2Fattacks%2FCSV%2Ftrain%2FBenign_train.pcap.csv
+
+2. Ataque DDoS SYN
+Archivo: TCP_IP-DDoS-SYN1_train.pcap.csv
+Descarga: https://cicresearch.ca/IOTDataset/CICIoMT2024/download.php?file=WiFI_and_MQTT%2Fattacks%2FCSV%2Ftrain%2FTCP_IP-DDoS-SYN1_train.pcap.csv
+
+3. Ataque DDoS UDP
+Archivo: TCP_IP-DDoS-UDP1_train.pcap.csv
+Descarga: https://cicresearch.ca/IOTDataset/CICIoMT2024/download.php?file=WiFI_and_MQTT%2Fattacks%2FCSV%2Ftrain%2FTCP_IP-DDoS-UDP1_train.pcap.csv
+
+2. PRUEBA OFICIAL (TEST)
+Guardar en: data/raw/CICIoMT2024/test/
+
+1. Tráfico benigno
+Archivo: Benign_test.pcap.csv
+Descarga: https://cicresearch.ca/IOTDataset/CICIoMT2024/download.php?file=WiFI_and_MQTT%2Fattacks%2FCSV%2Ftest%2FBenign_test.pcap.csv
+
+2. Ataque DDoS SYN
+Archivo: TCP_IP-DDoS-SYN_test.pcap.csv
+Descarga: https://cicresearch.ca/IOTDataset/CICIoMT2024/download.php?file=WiFI_and_MQTT%2Fattacks%2FCSV%2Ftest%2FTCP_IP-DDoS-SYN_test.pcap.csv
+
+3. Ataque DDoS UDP
+Archivo: TCP_IP-DDoS-UDP1_test.pcap.csv
+Descarga: https://cicresearch.ca/IOTDataset/CICIoMT2024/download.php?file=WiFI_and_MQTT%2Fattacks%2FCSV%2Ftest%2FTCP_IP-DDoS-UDP1_test.pcap.csv
+
+3. ORDEN DE EJECUCIÓN
+
+Abrir la carpeta raíz del proyecto en VS Code y seleccionar un kernel Python.
+El proyecto se trabajó con Python 3.12.9.
+
+Instalar las dependencias desde la terminal de la raíz:
+python -m pip install -r requirements.txt
+
+Ejecutar todas las celdas de los notebooks en este orden:
+1) notebooks/01_eda_and_cleaning.ipynb
+2) notebooks/02_preprocessing_fe.ipynb
+3) notebooks/03_baseline_models.ipynb
+
+Los notebooks 01 y 02 generan los archivos de data/processed/.
+No es necesario descargar esos archivos procesados por separado.
+El notebook 04 queda reservado para el trabajo final de la etapa III.
+
+4. ALCANCE
+
+Estos seis archivos corresponden al experimento actual con benigno,
+DDoS SYN y DDoS UDP dentro de IoMT. No incluyen redes tradicionales.
+Los archivos test ya fueron examinados: su evaluación es exploratoria.
+
+Opcional reservado, no requerido por el código actual:
+TCP_IP-DDoS-UDP2_test.pcap.csv
+Guardar, si se descarga, en: data/raw/CICIoMT2024/test/
+Descarga: https://cicresearch.ca/IOTDataset/CICIoMT2024/download.php?file=WiFI_and_MQTT%2Fattacks%2FCSV%2Ftest%2FTCP_IP-DDoS-UDP2_test.pcap.csv
+
+Fuente: Canadian Institute for Cybersecurity, University of New Brunswick.
+Consultar la página oficial para los requisitos de uso y citación del dataset.
+
