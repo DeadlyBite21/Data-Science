@@ -16,6 +16,26 @@ from sklearn.metrics import (
 from src.data_loader import CARPETA_RESULTADOS, CLASES
 
 
+def configurar_graficos():
+    """Estilo común: figuras más nítidas, texto más grande y cuadrícula suave."""
+    plt.rcParams.update({
+        "figure.dpi": 130,
+        "savefig.dpi": 200,
+        "savefig.bbox": "tight",
+        "font.size": 11,
+        "axes.titlesize": 13,
+        "axes.titleweight": "bold",
+        "axes.labelsize": 11,
+        "xtick.labelsize": 10,
+        "ytick.labelsize": 10,
+        "legend.fontsize": 10,
+        "axes.grid": True,
+        "grid.alpha": 0.3,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+    })
+
+
 def puntaje_ataque(modelo, X):
     """Probabilidad de DDoS, si el modelo la entrega (para PR-AUC)."""
     if hasattr(modelo, "predict_proba"):
@@ -117,7 +137,11 @@ def matriz_confusion(y_true, y_pred, tipo="binaria", titulo="", ax=None,
         colorbar=False,
         ax=ax,
     )
-    (ax or plt.gca()).set_title(titulo)
+    ax = ax or plt.gca()
+    ax.set_title(titulo)
+    ax.set_xlabel("Clase predicha")
+    ax.set_ylabel("Clase real")
+    ax.grid(False)
 
 
 def guardar_tabla(tabla, nombre):

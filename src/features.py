@@ -129,13 +129,22 @@ def estabilidad_variables(A, B, variables, muestra=100_000, random_state=42):
 
 
 # ---------------------------------------------------------------------------
-# Homologación entre CICIoMT2024 y CSE-CIC-IDS2018
+# Homologación entre CICIoMT2024 y redes tradicionales (CICFlowMeter)
 # ---------------------------------------------------------------------------
 # Ambos datasets usan extractores distintos: CICIoMT2024 resume ventanas de
-# paquetes y CIC-IDS2018 resume flujos completos (CICFlowMeter). Solo se
-# conservan variables con un significado equivalente, expresadas en la misma
-# escala (proporciones de banderas, longitudes de paquete y tasa de paquetes).
-# Es una aproximación y debe reportarse como limitación.
+# paquetes y CICFlowMeter resume flujos completos. Solo se conservan
+# variables con un significado equivalente, expresadas en la misma escala
+# (proporciones de banderas, longitudes de paquete y tasa de paquetes).
+#
+# Diferencias detectadas al comparar los datos reales:
+# - Longitud: CICIoMT2024 mide el paquete completo (un SYN pesa 54 bytes:
+#   14 Ethernet + 20 IP + 20 TCP); CICFlowMeter mide solo la carga útil.
+#   Con `alinear=True` se suman las cabeceras a CICFlowMeter.
+# - Banderas SYN y ACK: en CIC-DDoS2019 el SYN flood tiene SYN Flag Count = 0
+#   y ACK Flag Count = 1 en todos los flujos (error conocido de
+#   CICFlowMeter-V3), por lo que no son comparables entre dominios.
+# - Tasa: `Rate` (IoMT) y `Flow Pkts/s` (CICFlowMeter) tienen escalas muy
+#   distintas; `normalizar_por_dominio` lleva cada dominio a percentiles.
 
 BANDERAS = ["fin", "syn", "rst", "psh", "ack", "ece", "cwr"]
 BANDERAS_IDS2018 = {
@@ -143,11 +152,18 @@ BANDERAS_IDS2018 = {
     "psh": "PSH Flag Cnt", "ack": "ACK Flag Cnt", "ece": "ECE Flag Cnt",
     "cwr": "CWE Flag Count",
 }
+LONGITUDES = ["long_min", "long_max", "long_media", "long_std"]
 VARIABLES_COMUNES = (
     ["prop_tcp", "prop_udp"]
     + [f"bandera_{b}" for b in BANDERAS]
-    + ["long_min", "long_max", "long_media", "long_std", "tasa_paquetes"]
+    + LONGITUDES + ["tasa_paquetes"]
 )
+# Variables comunes sin las banderas que CICFlowMeter-V3 mide mal
+VARIABLES_COMUNES_FIABLES = [
+    v for v in VARIABLES_COMUNES if v not in ("bandera_syn", "bandera_ack")
+]
+# Cabeceras Ethernet (14) + IP (20) que CICFlowMeter no incluye
+CABECERA_ETHERNET_IP = 34
 
 
 def homologar_iomt(datos):
@@ -161,13 +177,23 @@ def homologar_iomt(datos):
         "long_std": datos["Std"],
         "tasa_paquetes": datos["Rate"],
     })
-    return comun.join(datos[["etiqueta"]])
+    return comun.join(datos[["clase", "etiqueta"]])
 
 
-def homologar_ids2018(datos):
+def homologar_cicflowmeter(datos, alinear=False):
+    """Homologa CSE-CIC-IDS2018 o CIC-DDoS2019 (nombres cortos de 2018).
+
+    Con `alinear=True` las longitudes pasan de carga útil a paquete completo,
+    sumando la cabecera de transporte media del flujo y Ethernet + IP.
+    """
     numerico = lambda c: pd.to_numeric(datos[c], errors="coerce")
     protocolo = numerico("Protocol")
     paquetes = (numerico("Tot Fwd Pkts") + numerico("Tot Bwd Pkts")).clip(lower=1)
+
+    cabecera = 0
+    if alinear:
+        transporte = (numerico("Fwd Header Len") + numerico("Bwd Header Len")) / paquetes
+        cabecera = transporte.clip(lower=0) + CABECERA_ETHERNET_IP
 
     comun = pd.DataFrame({
         "prop_tcp": (protocolo == 6).astype(float),
@@ -176,11 +202,34 @@ def homologar_ids2018(datos):
             f"bandera_{b}": (numerico(col) / paquetes).clip(0, 1)
             for b, col in BANDERAS_IDS2018.items()
         },
-        "long_min": numerico("Pkt Len Min"),
-        "long_max": numerico("Pkt Len Max"),
-        "long_media": numerico("Pkt Len Mean"),
+        "long_min": numerico("Pkt Len Min") + cabecera,
+        "long_max": numerico("Pkt Len Max") + cabecera,
+        "long_media": numerico("Pkt Len Mean") + cabecera,
         "long_std": numerico("Pkt Len Std"),
         "tasa_paquetes": numerico("Flow Pkts/s"),
     })
     comun = comun.replace([np.inf, -np.inf], np.nan)
-    return comun.join(datos[["etiqueta", "Label"]])
+    extra = [c for c in ["clase", "etiqueta", "Label"] if c in datos]
+    return comun.join(datos[extra])
+
+
+def normalizar_por_dominio(datos, variables, columnas=None, n_cuantiles=1000):
+    """Reemplaza longitudes y tasa por su percentil dentro del dominio.
+
+    Elimina diferencias de unidades y escala entre extractores. Solo usa los
+    valores de las variables (no las etiquetas), por lo que puede aplicarse
+    al dominio de destino sin filtrar información de clase. Es una forma
+    simple de adaptación de dominio no supervisada.
+    """
+    from sklearn.preprocessing import QuantileTransformer
+
+    continuas = LONGITUDES + ["tasa_paquetes"]
+    columnas = columnas or [v for v in variables if v in continuas]
+    resultado = datos.copy()
+    transformador = QuantileTransformer(
+        n_quantiles=min(n_cuantiles, len(datos)), random_state=42
+    )
+    resultado[columnas] = transformador.fit_transform(
+        datos[columnas].fillna(datos[columnas].median())
+    )
+    return resultado

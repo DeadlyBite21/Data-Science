@@ -1,7 +1,7 @@
 """Ingesta y limpieza de los flujos de red utilizados en el proyecto.
 
 Dominio IoMT: CICIoMT2024 (benigno, DDoS SYN y DDoS UDP).
-Dominio tradicional (opcional, etapa III): CSE-CIC-IDS2018.
+Dominio tradicional (opcional, etapa III): CIC-DDoS2019 y CSE-CIC-IDS2018.
 """
 
 import json
@@ -15,6 +15,7 @@ RAIZ_PROYECTO = Path(__file__).resolve().parents[1]
 CARPETA_DATOS = Path(os.environ.get("NIDS_DATA_DIR", RAIZ_PROYECTO / "data"))
 CARPETA_RAW = CARPETA_DATOS / "raw" / "CICIoMT2024"
 CARPETA_IDS2018 = CARPETA_DATOS / "raw" / "CSE-CIC-IDS2018"
+CARPETA_DDOS2019 = CARPETA_DATOS / "raw" / "CIC-DDoS2019"
 CARPETA_PROCESADOS = CARPETA_DATOS / "processed"
 CARPETA_RESULTADOS = RAIZ_PROYECTO / "deliverables" / "resultados"
 CARPETA_MODELOS = RAIZ_PROYECTO / "models"
@@ -37,6 +38,30 @@ ARCHIVOS = {
 }
 
 ARCHIVO_IDS2018 = "Wednesday-21-02-2018_TrafficForML_CICFlowMeter.csv"
+
+# Columnas de CICFlowMeter necesarias para homologar con CICIoMT2024.
+# CIC-DDoS2019 usa los nombres largos de CICFlowMeter-V3; se renombran a
+# los nombres cortos de CSE-CIC-IDS2018 para tratar ambos datasets igual.
+NOMBRES_CICFLOWMETER = {
+    "Protocol": "Protocol",
+    "Total Fwd Packets": "Tot Fwd Pkts",
+    "Total Backward Packets": "Tot Bwd Pkts",
+    "Fwd Header Length": "Fwd Header Len",
+    "Bwd Header Length": "Bwd Header Len",
+    "FIN Flag Count": "FIN Flag Cnt",
+    "SYN Flag Count": "SYN Flag Cnt",
+    "RST Flag Count": "RST Flag Cnt",
+    "PSH Flag Count": "PSH Flag Cnt",
+    "ACK Flag Count": "ACK Flag Cnt",
+    "ECE Flag Count": "ECE Flag Cnt",
+    "CWE Flag Count": "CWE Flag Count",
+    "Min Packet Length": "Pkt Len Min",
+    "Max Packet Length": "Pkt Len Max",
+    "Packet Length Mean": "Pkt Len Mean",
+    "Packet Length Std": "Pkt Len Std",
+    "Flow Packets/s": "Flow Pkts/s",
+    "Label": "Label",
+}
 
 
 def ruta_archivo(particion, clase):
@@ -182,4 +207,60 @@ def cargar_ids2018(archivo=ARCHIVO_IDS2018, nrows=None):
     # Algunos CSV de 2018 repiten la fila de encabezado en medio del archivo
     datos = datos.loc[datos["Label"] != "Label"].copy()
     datos["etiqueta"] = (datos["Label"].str.lower() != "benign").astype(int)
+    return datos
+
+
+def clase_ddos2019(etiqueta):
+    """Equivalencia con las clases de IoMT: solo SYN flood y UDP flood.
+
+    Otros ataques (DrDoS_*, UDP-lag, LDAP, ...) devuelven None y se descartan.
+    """
+    etiqueta = str(etiqueta).strip().upper()
+    if etiqueta == "BENIGN":
+        return 0
+    if etiqueta == "SYN":
+        return 1
+    if etiqueta == "UDP":
+        return 2
+    return None
+
+
+def cargar_ddos2019(max_por_ataque=200_000, tamano_bloque=500_000,
+                    random_state=42):
+    """Lee todos los CSV de CIC-DDoS2019 en data/raw/CIC-DDoS2019/.
+
+    El dataset tiene muy poco tráfico benigno, repartido entre archivos, y
+    millones de flujos de ataque. Se conserva todo el benigno de todos los
+    archivos y una muestra aleatoria de hasta `max_por_ataque` flujos de
+    SYN flood y de UDP flood. Devuelve None si no hay archivos.
+    """
+    archivos = sorted(CARPETA_DDOS2019.rglob("*.csv"))
+    if not archivos:
+        return None
+
+    rng = np.random.default_rng(random_state)
+    partes = []
+    for archivo in archivos:
+        lector = pd.read_csv(
+            archivo,
+            usecols=lambda c: c.strip() in NOMBRES_CICFLOWMETER,
+            chunksize=tamano_bloque,
+            low_memory=False,
+        )
+        for bloque in lector:
+            bloque.columns = bloque.columns.str.strip()
+            bloque["clase"] = bloque["Label"].map(clase_ddos2019)
+            bloque = bloque.dropna(subset=["clase"])
+            # Muestra preliminar por bloque para acotar la memoria
+            ataques = bloque[bloque["clase"] > 0]
+            ataques = ataques[rng.random(len(ataques)) < 0.2]
+            partes.append(pd.concat([bloque[bloque["clase"] == 0], ataques]))
+
+    datos = pd.concat(partes, ignore_index=True).rename(columns=NOMBRES_CICFLOWMETER)
+    datos["clase"] = datos["clase"].astype(int)
+    datos = pd.concat([
+        g if c == 0 else g.sample(min(len(g), max_por_ataque), random_state=random_state)
+        for c, g in datos.groupby("clase")
+    ], ignore_index=True)
+    datos["etiqueta"] = (datos["clase"] > 0).astype(int)
     return datos

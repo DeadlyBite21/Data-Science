@@ -64,15 +64,22 @@ Los archivos test ya fueron examinados: su evaluación es exploratoria.
 
 5. RED TRADICIONAL (OPCIONAL, ETAPA III)
 
-La sección de generalización cruzada del notebook 04 usa CSE-CIC-IDS2018
-(tráfico benigno, DDoS-LOIC-UDP y DDoS-HOIC del 21-02-2018). Si el archivo
-no está, esa sección se omite y el resto del notebook se ejecuta igual.
+La sección de generalización cruzada del notebook 04 usa CIC-DDoS2019,
+que contiene los mismos ataques del experimento IoMT (SYN flood y UDP
+flood) en una red tradicional. Si los CSV no están, esa sección se omite
+y el resto del notebook se ejecuta igual.
 
-Archivo: Wednesday-21-02-2018_TrafficForML_CICFlowMeter.csv
-Guardar en: data/raw/CSE-CIC-IDS2018/
-Página oficial: https://www.unb.ca/cic/datasets/ids-2018.html
-Descarga (AWS CLI, sin cuenta):
-aws s3 cp --no-sign-request "s3://cse-cic-ids2018/Processed Traffic Data for ML Algorithms/Wednesday-21-02-2018_TrafficForML_CICFlowMeter.csv" data/raw/CSE-CIC-IDS2018/
+Página oficial: https://www.unb.ca/cic/datasets/ddos-2019.html
+Descarga: completar el formulario del CIC y descargar CSVs/CSV-03-11.zip
+(unos 920 MB comprimido y 8,7 GB descomprimido).
+Descomprimir en: data/raw/CIC-DDoS2019/  (queda data/raw/CIC-DDoS2019/03-11/)
+
+Se leen todos los CSV de la carpeta: el tráfico benigno se toma de todos
+los archivos (es escaso) y los ataques solo de las etiquetas Syn y UDP.
+
+CSE-CIC-IDS2018 (no requerido por el código actual): se evaluó como red
+tradicional, pero el archivo del 21-02-2018 contiene sobre todo DDoS-HOIC
+(HTTP) y casi nada de UDP, por lo que no es comparable con IoMT.
 
 Otro archivo opcional, no requerido por el código actual:
 TCP_IP-DDoS-UDP2_test.pcap.csv

@@ -1,0 +1,7 @@
+Tarea,Modelo,Mejores hiperparámetros,F1 macro CV,Segundos de entrenamiento
+binaria,Random Forest,"{'max_depth': 30, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'n_estimators': 157}",0.999702399911707,9.957041874993593
+binaria,LightGBM,"{'colsample_bytree': np.float64(0.749816047538945), 'learning_rate': np.float64(0.262516606324193), 'min_child_samples': 81, 'n_estimators': 288, 'num_leaves': 35, 'subsample': np.float64(0.6624074561769746), 'subsample_freq': 1}",0.9998397409050236,2.5873472499661148
+binaria,XGBoost,"{'colsample_bytree': np.float64(0.7164916560792167), 'learning_rate': np.float64(0.10486361783805698), 'max_depth': 4, 'min_child_weight': 3, 'n_estimators': 463, 'subsample': np.float64(0.8056937753654446)}",0.9997252869874308,4.487380000005942
+multiclase,Random Forest,"{'max_depth': 30, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'n_estimators': 157}",0.9997157817792327,19.98554491699906
+multiclase,LightGBM,"{'colsample_bytree': np.float64(0.6092249700165663), 'learning_rate': np.float64(0.08283481117034153), 'min_child_samples': 51, 'n_estimators': 575, 'num_leaves': 74, 'subsample': np.float64(0.7465447373174767), 'subsample_freq': 1}",0.9998375412180959,22.683989167038817
+multiclase,XGBoost,"{'colsample_bytree': np.float64(0.6053059844639466), 'learning_rate': np.float64(0.25653418421266855), 'max_depth': 8, 'min_child_weight': 2, 'n_estimators': 364, 'subsample': np.float64(0.6063865008880857)}",0.9998375412180959,13.070111166976858
