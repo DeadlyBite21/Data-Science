@@ -1,2 +1,12 @@
 GeneratedLabelledFlows.zip
 TrafficLabelling
+# Datos y modelos generados (no versionados)
+data/raw/
+data/processed/
+models/
+
+# Entorno y archivos temporales
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store

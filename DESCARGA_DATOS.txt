@@ -47,10 +47,14 @@ Ejecutar todas las celdas de los notebooks en este orden:
 1) notebooks/01_eda_and_cleaning.ipynb
 2) notebooks/02_preprocessing_fe.ipynb
 3) notebooks/03_baseline_models.ipynb
+4) notebooks/04_final_models_eval.ipynb
 
 Los notebooks 01 y 02 generan los archivos de data/processed/.
 No es necesario descargar esos archivos procesados por separado.
-El notebook 04 queda reservado para el trabajo final de la etapa III.
+Los notebooks 03 y 04 guardan las métricas en deliverables/resultados/
+y los modelos entrenados en models/ (no versionada).
+El notebook 04 (etapa III) puede tardar varios minutos por la búsqueda
+de hiperparámetros; se ajusta con MUESTRA_BUSQUEDA e ITERACIONES_BUSQUEDA.
 
 4. ALCANCE
 
@@ -58,7 +62,19 @@ Estos seis archivos corresponden al experimento actual con benigno,
 DDoS SYN y DDoS UDP dentro de IoMT. No incluyen redes tradicionales.
 Los archivos test ya fueron examinados: su evaluación es exploratoria.
 
-Opcional reservado, no requerido por el código actual:
+5. RED TRADICIONAL (OPCIONAL, ETAPA III)
+
+La sección de generalización cruzada del notebook 04 usa CSE-CIC-IDS2018
+(tráfico benigno, DDoS-LOIC-UDP y DDoS-HOIC del 21-02-2018). Si el archivo
+no está, esa sección se omite y el resto del notebook se ejecuta igual.
+
+Archivo: Wednesday-21-02-2018_TrafficForML_CICFlowMeter.csv
+Guardar en: data/raw/CSE-CIC-IDS2018/
+Página oficial: https://www.unb.ca/cic/datasets/ids-2018.html
+Descarga (AWS CLI, sin cuenta):
+aws s3 cp --no-sign-request "s3://cse-cic-ids2018/Processed Traffic Data for ML Algorithms/Wednesday-21-02-2018_TrafficForML_CICFlowMeter.csv" data/raw/CSE-CIC-IDS2018/
+
+Otro archivo opcional, no requerido por el código actual:
 TCP_IP-DDoS-UDP2_test.pcap.csv
 Guardar, si se descarga, en: data/raw/CICIoMT2024/test/
 Descarga: https://cicresearch.ca/IOTDataset/CICIoMT2024/download.php?file=WiFI_and_MQTT%2Fattacks%2FCSV%2Ftest%2FTCP_IP-DDoS-UDP2_test.pcap.csv
